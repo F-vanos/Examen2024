@@ -1,0 +1,44 @@
+# Path naar het CSV-bestand - AANPASSEN NAAR JOUW BESTANDSPAD
+$csvPath = "C:\Pad\Naar\JouwBestand.csv"
+
+# Importeren van de CSV
+if (Test-Path $csvPath) {
+    $groups = Import-Csv -Path $csvPath
+} else {
+    Write-Host "Het CSV-bestand kon niet worden gevonden. Controleer het pad." -ForegroundColor Red
+    exit
+}
+
+# Functie om een Security Group aan te maken
+function Create-SecurityGroup {
+    param (
+        [string]$GroupName,
+        [string]$Description
+    )
+
+    # Check of de groep al bestaat
+    if (Get-ADGroup -Filter "Name -eq '$GroupName'" -ErrorAction SilentlyContinue) {
+        Write-Host "Groep '$GroupName' bestaat al. Overslaan..." -ForegroundColor Yellow
+    } else {
+        try {
+            # Groep aanmaken
+            New-ADGroup -Name $GroupName -GroupScope Global -GroupCategory Security -Description $Description
+            Write-Host "Groep '$GroupName' succesvol aangemaakt." -ForegroundColor Green
+        } catch {
+            Write-Host "Fout bij het aanmaken van groep '$GroupName': $_" -ForegroundColor Red
+        }
+    }
+}
+
+# Itereren door de CSV en groepen aanmaken
+foreach ($group in $groups) {
+    # De kolomnamen hieronder moeten overeenkomen met die in je CSV - AANPASSEN NAAR JOUW CSV STRUCTUUR
+    $groupName = $group.GroupName
+    $description = $group.Description
+
+    if (-not [string]::IsNullOrEmpty($groupName)) {
+        Create-SecurityGroup -GroupName $groupName -Description $description
+    } else {
+        Write-Host "Lege groepnaam gevonden. Overslaan..." -ForegroundColor Yellow
+    }
+}
