@@ -1,0 +1,4 @@
+UserName,FirstName,LastName,OU,Password
+jdoe,John,Doe,OU=HR,OU=Departments,DC=domain,DC=local,Welcome123!
+asmith,Alice,Smith,OU=IT,OU=Departments,DC=domain,DC=local,Welcome123!
+bjones,Bob,Jones,OU=Finance,OU=Departments,DC=domain,DC=local,Welcome123!
