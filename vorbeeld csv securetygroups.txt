@@ -1,0 +1,4 @@
+GroupName,Description
+HR-Team,Group for HR Department
+IT-Team,Group for IT Department
+Finance-Team,Group for Finance Department
