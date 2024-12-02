@@ -1,0 +1,54 @@
+# Pad naar het CSV-bestand - AANPASSEN NAAR JOUW BESTANDSPAD
+$csvPath = "C:\Pad\Naar\JouwBestand.csv"
+
+# Controleren of het CSV-bestand bestaat
+if (Test-Path $csvPath) {
+    $users = Import-Csv -Path $csvPath
+} else {
+    Write-Host "Het CSV-bestand kon niet worden gevonden. Controleer het pad." -ForegroundColor Red
+    exit
+}
+
+# Functie om een gebruiker aan te maken in een specifieke OU
+function Create-UserInOU {
+    param (
+        [string]$UserName,   # Gebruikersnaam
+        [string]$FirstName,  # Voornaam
+        [string]$LastName,   # Achternaam
+        [string]$OU,         # Organizational Unit (Distinguished Name)
+        [string]$Password    # Wachtwoord (optioneel, kan default zijn)
+    )
+
+    # Controleren of de gebruiker al bestaat
+    if (Get-ADUser -Filter "SamAccountName -eq '$UserName'" -ErrorAction SilentlyContinue) {
+        Write-Host "Gebruiker '$UserName' bestaat al. Overslaan..." -ForegroundColor Yellow
+    } else {
+        try {
+            # Nieuwe gebruiker aanmaken
+            $name = "$FirstName $LastName"
+            New-ADUser -SamAccountName $UserName -UserPrincipalName "$UserName@domain.local" `
+                -Name $name -GivenName $FirstName -Surname $LastName `
+                -Path $OU -AccountPassword (ConvertTo-SecureString $Password -AsPlainText -Force) `
+                -Enabled $true
+            Write-Host "Gebruiker '$UserName' succesvol aangemaakt in OU '$OU'." -ForegroundColor Green
+        } catch {
+            Write-Host "Fout bij het aanmaken van gebruiker '$UserName': $_" -ForegroundColor Red
+        }
+    }
+}
+
+# Itereren door de CSV en gebruikers toevoegen aan OU's
+foreach ($user in $users) {
+    # De kolomnamen hieronder moeten overeenkomen met de CSV - AANPASSEN NAAR JOUW CSV STRUCTUUR
+    $userName = $user.UserName         # Gebruikersnaam
+    $firstName = $user.FirstName       # Voornaam
+    $lastName = $user.LastName         # Achternaam
+    $ou = $user.OU                     # Distinguished Name van de OU
+    $password = $user.Password         # Standaard wachtwoord
+
+    if (-not ([string]::IsNullOrEmpty($userName) -or [string]::IsNullOrEmpty($ou))) {
+        Create-UserInOU -UserName $userName -FirstName $firstName -LastName $lastName -OU $ou -Password $password
+    } else {
+        Write-Host "Lege gegevens gevonden (gebruikersnaam of OU ontbreekt). Overslaan..." -ForegroundColor Yellow
+    }
+}
